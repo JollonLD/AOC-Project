@@ -1,4 +1,6 @@
 .data
+menu: .asciiz "\n1. Menu de Locais\n2. Gerar Rotas\n3. Sair\n"
+      
 locais: .asciiz "1. Parque Vicentina Aranha\n2. DCTA - Instituto de Aeronautica\n3. Shopping Colinas\n4. Observatorio Astronomico\n"
 
 transportes: .asciiz "\nMeios de transporte disponiveis:\n1. Carro\n2. Onibus\n3. Bicicleta\n4. A pe\n"
@@ -40,15 +42,32 @@ resultado: .asciiz "\nDistancia em km: "
 separador: .asciiz "\nTempo estimado em minutos: "
 erro_local: .asciiz "\nErro: Por favor insira numeros entre 1 e 4 para os locais.\n"
 erro_transporte: .asciiz "\nErro: Por favor insira numeros entre 1 e 4 para o transporte.\n"
+enter: .asciiz "\n"
 
 .text
 .globl main
 
 main:
-    # Mostrar os locais disponiveis
-    la $a0, locais
+    
+    mostra_menu:
+        li $v0, 4
+        la $a0, menu
+        syscall
+
+        li $v0, 5
+        syscall
+        move $t0, $v0
+
+        beq $t0, 1, print_locais
+        beq $t0, 2, input_inicio
+        beq $t0, 3, exit
+        
+print_locais:
     li $v0, 4
+    la $a0, locais
     syscall
+
+    j mostra_menu
 
 input_inicio:
     # Solicitar local de inicio
@@ -145,8 +164,13 @@ continuar_calculo:
     move $a0, $s1
     syscall
 
+    li $v0, 4
+    la $a0, enter
+    syscall
+
+
     # Encerrar programa
-    j exit
+    j mostra_menu
 
 usar_carro:
     la $t4, tempos_carro
