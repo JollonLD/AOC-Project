@@ -1,8 +1,8 @@
 .data
-grafo: .word 1, 1, 0, 1    # Vertice 0: conectado com 0, 1, e 3
-       .word 1, 1, 1, 0    # Vertice 1: conectado com 0, 1, e 2
-       .word 0, 1, 1, 0    # Vertice 2: conectado com 1 e 2
-       .word 1, 0, 0, 1    # Vertice 3: conectado com 0 e 3
+grafo: .word 0, 1, 1, 0    # Vertice 0: conectado com 0, 1, e 3
+       .word 0, 0, 1, 1    # Vertice 1: conectado com 0, 1, e 2
+       .word 0, 0, 0, 1    # Vertice 2: conectado com 1 e 2
+       .word 0, 0, 0, 0    # Vertice 3: conectado com 0 e 3
 
 visitados: .word 0, 0, 0, 0  # Array para marcar vertices visitados
 caminho: .word 0:10          # Array para armazenar o caminho atual (max 10 vertices)
@@ -10,10 +10,14 @@ tam_caminho: .word 0         # Tamanho atual do caminho
 
 prompt_inicio: .asciiz "\nVertice inicial (0-3): "
 prompt_fim: .asciiz "Vertice final (0-3): "
-msg_caminho: .asciiz "\nCaminho encontrado: "
+msg_caminhos: .asciiz "\nCaminhos encontrados:\nCaminho "
+num_caminho: .asciiz "#"
+dois_pontos: .asciiz ": "
 separador: .asciiz " -> "
 quebra_linha: .asciiz "\n"
 erro: .asciiz "\nErro: Digite um numero entre 0 e 3\n"
+
+contador_caminhos: .word 0    # Novo: contador para número de caminhos encontrados
 
 .text
 .globl main
@@ -47,6 +51,10 @@ main:
     bltz $s1, erro_input
     bgt $s1, 3, erro_input
     
+    # Resetar contador de caminhos
+    la $t0, contador_caminhos
+    sw $zero, ($t0)
+    
     # Inicializar busca
     jal reset_visitados
     
@@ -60,7 +68,7 @@ main:
     li $v0, 10
     syscall
 
-# Funcao DFS
+# Funcao DFS modificada
 dfs:
     # Salvar registradores na pilha
     addi $sp, $sp, -20
@@ -145,11 +153,27 @@ fim_loop_vizinhos:
     addi $sp, $sp, 20
     jr $ra
 
-# Funcao para imprimir o caminho atual
+# Funcao para imprimir o caminho atual (modificada)
 imprimir_caminho:
+    # Incrementar contador de caminhos
+    la $t0, contador_caminhos
+    lw $t1, ($t0)
+    addi $t1, $t1, 1
+    sw $t1, ($t0)
+    
     # Imprimir mensagem inicial
     li $v0, 4
-    la $a0, msg_caminho
+    la $a0, msg_caminhos
+    syscall
+    
+    # Imprimir número do caminho
+    li $v0, 1
+    move $a0, $t1
+    syscall
+    
+    # Imprimir dois pontos
+    li $v0, 4
+    la $a0, dois_pontos
     syscall
     
     # Inicializar contador
@@ -185,16 +209,10 @@ fim_imprimir:
     la $a0, quebra_linha
     syscall
     
-    # Continuar a busca
-    lw $ra, 16($sp)
-    lw $s0, 12($sp)
-    lw $s1, 8($sp)
-    lw $s2, 4($sp)
-    lw $s3, 0($sp)
-    addi $sp, $sp, 20
-    jr $ra
+    # Continuar a busca (backtracking)
+    j fim_loop_vizinhos
 
-# Funcao para resetar array de visitados
+# Funcao para resetar array de visitados (sem alteração)
 reset_visitados:
     la $t0, visitados      # endereco base
     li $t1, 0              # i = 0
